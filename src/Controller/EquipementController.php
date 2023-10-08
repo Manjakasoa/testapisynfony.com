@@ -35,8 +35,12 @@ class EquipementController extends AbstractController
      /**
      * @Route("/api/equipement/{id}", name="get_equipement", methods={"GET"})
      */
-    public function getDetail(Equipement $equipement, SerializerInterface $serializer): JsonResponse 
+    public function getDetail(SerializerInterface $serializer,$id,EquipementRepository $equipementRepository): JsonResponse 
     {
+        $equipement = $equipementRepository->find($id);
+        if(!$equipement) {
+            return new JsonResponse(['message' => 'equipement not found'],Response::HTTP_NOT_FOUND);
+        }
         $jsonEquipement = $serializer->serialize($equipement, 'json');
         return new JsonResponse($jsonEquipement, Response::HTTP_OK, [], true);
     }
@@ -53,19 +57,27 @@ class EquipementController extends AbstractController
     /**
      * @Route("/api/equipement/{id}", name="delete_equipement", methods={"DELETE"})
      */
-    public function delete(Equipement $equipement, EntityManagerInterface $em): JsonResponse 
+    public function delete(EntityManagerInterface $em,$id,EquipementRepository $equipementRepository): JsonResponse 
     {
+        $equipement = $equipementRepository->find($id);
+        if(!$equipement) {
+            return new JsonResponse(['message' => 'equipement not found'],Response::HTTP_NOT_FOUND);
+        }
         $em->remove($equipement);
         $em->flush();
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
 
     }
    /**
      * @Route("/api/equipement/{id}", name="update_equipement", methods={"PUT"})
      */
 
-    public function update(Request $request, SerializerInterface $serializer, Equipement $equipement, EntityManagerInterface $em,ValidatorInterface $validator): JsonResponse 
+    public function update(Request $request, SerializerInterface $serializer,$id,EquipementRepository $equipementRepository, EntityManagerInterface $em,ValidatorInterface $validator): JsonResponse 
     {
+        $equipement = $equipementRepository->find($id);
+        if(!$equipement) {
+            return new JsonResponse(['message' => 'equipement not found'],Response::HTTP_NOT_FOUND);
+        }
         $updatedEquipement = $serializer->deserialize($request->getContent(), 
                 Equipement::class, 
                 'json', 
@@ -74,6 +86,7 @@ class EquipementController extends AbstractController
             return new JsonResponse(ValidatorError::getResponseError($validator->validate($updatedEquipement)), Response::HTTP_BAD_REQUEST);
         $em->persist($updatedEquipement);
         $em->flush();
-        return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
+        $jsonEquipement = $serializer->serialize($equipement, 'json');
+        return new JsonResponse($jsonEquipement, Response::HTTP_OK, [], true);
    }
 }
